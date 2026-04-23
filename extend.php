@@ -48,11 +48,17 @@ return [
         ->content(InjectSeoTags::class),
 
     (new Extend\Event())
-        ->listen(Started::class, [SendToGoogleConsole::class, 'whenDiscussionStarted'])
-        ->listen(Posted::class, [SendToGoogleConsole::class, 'whenPostCreated'])
-        ->listen(Posted::class, [AutoAltTags::class, 'whenPostCreated'])
-        ->listen(Revised::class, [SendToGoogleConsole::class, 'whenPostRevised'])
-        ->listen(Revised::class, [AutoAltTags::class, 'whenPostRevised']),
+        ->listen(Started::class, function (Started $event) {
+            resolve(SendToGoogleConsole::class)->whenDiscussionStarted($event);
+        })
+        ->listen(Posted::class, function (Posted $event) {
+            resolve(SendToGoogleConsole::class)->whenPostCreated($event);
+            resolve(AutoAltTags::class)->whenPostCreated($event);
+        })
+        ->listen(Revised::class, function (Revised $event) {
+            resolve(SendToGoogleConsole::class)->whenPostRevised($event);
+            resolve(AutoAltTags::class)->whenPostRevised($event);
+        }),
 
     (new Extend\Console())
         ->command(AutoIndexCommand::class)
