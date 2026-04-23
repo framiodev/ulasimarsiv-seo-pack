@@ -5,11 +5,7 @@
  * Flarum 2.0 Uyumlu Versiyon.
  */
 
-namespace UlasimArsiv\SeoPack;
-
 use Flarum\Extend;
-
-// Kontrolcüler
 use UlasimArsiv\SeoPack\InjectSeoTags;
 use UlasimArsiv\SeoPack\SitemapController;
 use UlasimArsiv\SeoPack\BatchIndexController;
@@ -18,16 +14,10 @@ use UlasimArsiv\SeoPack\ContentListController;
 use UlasimArsiv\SeoPack\DashboardStatsController;
 use UlasimArsiv\SeoPack\WebAutoIndexController;
 use UlasimArsiv\SeoPack\ImageIndexController;
-
-// Konsol Komutları
 use UlasimArsiv\SeoPack\Console\AutoIndexCommand;
 use UlasimArsiv\SeoPack\Console\FixOldAltTagsCommand;
-
-// Dinleyiciler
 use UlasimArsiv\SeoPack\Listener\SendToGoogleConsole;
 use UlasimArsiv\SeoPack\Listener\AutoAltTags;
-
-// Flarum Olayları
 use Flarum\Discussion\Event\Started;
 use Flarum\Post\Event\Posted;
 use Flarum\Post\Event\Revised;
@@ -60,7 +50,9 @@ return [
     (new Extend\Event())
         ->listen(Started::class, [SendToGoogleConsole::class, 'whenDiscussionStarted'])
         ->listen(Posted::class, [SendToGoogleConsole::class, 'whenPostCreated'])
-        ->listen(Revised::class, [SendToGoogleConsole::class, 'whenPostRevised']),
+        ->listen(Posted::class, [AutoAltTags::class, 'whenPostCreated'])
+        ->listen(Revised::class, [SendToGoogleConsole::class, 'whenPostRevised'])
+        ->listen(Revised::class, [AutoAltTags::class, 'whenPostRevised']),
 
     (new Extend\Console())
         ->command(AutoIndexCommand::class)

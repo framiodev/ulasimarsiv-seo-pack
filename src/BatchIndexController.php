@@ -43,8 +43,7 @@ class BatchIndexController implements RequestHandlerInterface
             $client->addScope('https://www.googleapis.com/auth/indexing');
             $indexingService = new Indexing($client);
 
-            $query = CommentPost::where('is_private', false)
-                ->whereNull('hidden_at')
+            $query = CommentPost::whereNull('hidden_at')
                 ->where(function($q) {
                     $q->where('content', 'like', '%ulasimarsiv-image%')
                       ->orWhere('content', 'like', '%upl-image-preview%')

@@ -42,8 +42,7 @@ class AutoIndexCommand extends AbstractCommand
 
         $timeLimit = new \DateTime('-24 hours');
         
-        $discussions = \Flarum\Discussion\Discussion::where('is_private', false)
-            ->whereNull('hidden_at')
+        $discussions = \Flarum\Discussion\Discussion::whereNull('hidden_at')
             ->where('last_posted_at', '>=', $timeLimit)
             ->where(function ($query) {
                 $query->whereNull('seo_last_sent_at')
@@ -60,8 +59,7 @@ class AutoIndexCommand extends AbstractCommand
             $discussion->save();
         }
 
-        $posts = CommentPost::where('is_private', false)
-            ->whereNull('hidden_at')
+        $posts = CommentPost::whereNull('hidden_at')
             ->where('created_at', '>=', $timeLimit)
             ->whereHas('discussion', function ($query) {
                 $query->whereNull('seo_last_sent_at')

@@ -71,7 +71,7 @@ class DashboardStatsController implements RequestHandlerInterface
                 ]);
 
                 try {
-                    $response = $analytics->properties->runReport($propertyId, $reportRequest);
+                    $response = $analytics->properties->runReport('properties/' . $propertyId, $reportRequest);
                     foreach ($response->getRows() as $row) {
                         $stats['ga4']['active_users'] += (int)$row->getMetricValues()[0]->getValue();
                         $stats['ga4']['screen_views'] += (int)$row->getMetricValues()[1]->getValue();
