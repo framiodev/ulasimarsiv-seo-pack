@@ -79,17 +79,17 @@ class SeoAdminPage extends ExtensionPage {
             m('div.SeoContent', [
                 this.activeTab === 'dashboard' ? m('div', [
                     this.loading && !dStats ? m('p', 'Veriler getiriliyor...') : m('div', [
-                        m('div.StatGrid', { style: 'display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;' }, [
+                        m('div.StatGrid', [
                             [['Web Tık', gsc.clicks, '#3498db', 'mouse-pointer'], ['Resim Tık', (dStats && dStats.img_gsc ? dStats.img_gsc.clicks : 0), '#e74c3c', 'images'], ['Gösterim', gsc.impressions, '#9b59b6', 'eye'], ['Aktif', ga.active_users, '#27ae60', 'users']].map(c =>
-                                m('div.StatBox', { style: 'flex:1; background:#fff; padding:15px; border-radius:6px; border:1px solid #eee; text-align:center;' }, [
+                                m('div.StatBox', [
                                     m('div', { style: 'color:#888; font-size:11px;' }, c[0]),
                                     m('div', { style: 'font-size:24px; font-weight:bold; color:#333; margin:5px 0;' }, c[1]),
                                     m('i', { className: 'fas fa-' + c[3], style: 'color:' + c[2] })
                                 ])
                             )
                         ]),
-                        m('div', { style: 'display:flex; gap:20px;' }, [
-                            m('div.SeoCard', { style: 'flex:1' }, [
+                        m('div.StatGrid', [
+                            m('div.SeoCard', [
                                 m('h4', 'En Çok Aranan Kelimeler'),
                                 m('table', { style: 'width:100%' }, gsc.top_queries.map(q => m('tr', [m('td', q.keyword), m('td', { style: 'text-align:right' }, q.clicks)])))
                             ]),
