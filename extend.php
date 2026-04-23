@@ -21,7 +21,7 @@ use UlasimArsiv\SeoPack\Listener\AutoAltTags;
 use Flarum\Discussion\Event\Started;
 use Flarum\Post\Event\Posted;
 use Flarum\Post\Event\Revised;
-
+use Flarum\Post\Event\Saving;
 return [
     (new Extend\Locales(__DIR__.'/resources/locale')),
 
@@ -51,13 +51,14 @@ return [
         ->listen(Started::class, function (Started $event) {
             app(SendToGoogleConsole::class)->whenDiscussionStarted($event);
         })
+        ->listen(Saving::class, function (Saving $event) {
+            app(AutoAltTags::class)->whenPostSaving($event);
+        })
         ->listen(Posted::class, function (Posted $event) {
             app(SendToGoogleConsole::class)->whenPostCreated($event);
-            app(AutoAltTags::class)->whenPostCreated($event);
         })
         ->listen(Revised::class, function (Revised $event) {
             app(SendToGoogleConsole::class)->whenPostRevised($event);
-            app(AutoAltTags::class)->whenPostRevised($event);
         }),
 
     (new Extend\Console())

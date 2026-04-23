@@ -2,29 +2,20 @@
 
 namespace UlasimArsiv\SeoPack\Listener;
 
-use Flarum\Post\Event\Posted;
-use Flarum\Post\Event\Revised;
+use Flarum\Post\Event\Saving;
 use Flarum\Settings\SettingsRepositoryInterface;
-use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Str;
 
 class AutoAltTags
 {
     protected $settings;
-    protected $db;
 
-    public function __construct(SettingsRepositoryInterface $settings, ConnectionInterface $db)
+    public function __construct(SettingsRepositoryInterface $settings)
     {
         $this->settings = $settings;
-        $this->db = $db;
     }
 
-    public function whenPostCreated(Posted $event)
-    {
-        $this->updateAltTags($event->post);
-    }
-
-    public function whenPostRevised(Revised $event)
+    public function whenPostSaving(Saving $event)
     {
         $this->updateAltTags($event->post);
     }
@@ -79,9 +70,9 @@ class AutoAltTags
         }, $xml);
 
         if ($changed) {
-            $table = $post->getTable();
-            // Veritabanındaki sütun adı hala 'content' (XML verisini saklar)
-            $this->db->table($table)->where('id', $post->id)->update(['content' => $xml]);
+            // Veritabanına manuel sorgu atmıyoruz!
+            // Saving olayında olduğumuz için modeli güncelleyip bırakıyoruz, Flarum kalanı kendisi halledecek.
+            $post->parsed_content = $xml;
         }
     }
 }
