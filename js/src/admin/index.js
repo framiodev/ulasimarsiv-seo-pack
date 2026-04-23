@@ -149,18 +149,27 @@ class SeoAdminPage {
                     m('div.Form-group', [ m('label', 'Google Analytics 4 Ölçüm Kimliği (G-XXXXXXXX)'), m('input.FormControl', { bidi: this.setting('ulasimarsiv-seo.ga_id') }) ]),
                     m('div.Form-group', [ m('label', 'GA4 Mülk Kimliği (Sayısal ID - Dashboard İçin)'), m('input.FormControl', { bidi: this.setting('ulasimarsiv-seo.ga_id_number') }) ]),
                     m('div.Form-group', [ m('label', 'Google Search Console Doğrulama Kodu'), m('input.FormControl', { bidi: this.setting('ulasimarsiv-seo.gsc_code') }) ]),
-                    m('div.Form-group', [ m('label', 'Google Ads Yayıncı Kimliği (ca-pub-XXXXXXXX)'), m('input.FormControl', { bidi: this.setting('ulasimarsiv-seo.ads_client') }) ]),
-                    m('div.Form-group', [ m('label', 'Site Açıklaması (Meta Description)'), m('textarea.FormControl', { bidi: this.setting('ulasimarsiv-seo.meta_description_prefix') }) ]),
-                    m('div.Form-group', [ m('label', 'Meta Anahtar Kelimeler'), m('textarea.FormControl', { bidi: this.setting('ulasimarsiv-seo.meta_keywords') }) ]),
-                    m('div.Form-group', [ m('label', 'Cron-Job.org Gizli Anahtarı (Tetikleme Şifresi)'), m('input.FormControl', { bidi: this.setting('ulasimarsiv-seo.trigger_secret') }) ])
+                    m('div.Form-group', [ m('label', 'Google Analytics 4 Ölçüm Kimliği (G-XXXXXXXX)'), m('input.FormControl', { value: this.setting('ulasimarsiv-seo.ga_id')(), oninput: (e) => this.setting('ulasimarsiv-seo.ga_id')(e.target.value) }) ]),
+                    m('div.Form-group', [ m('label', 'GA4 Mülk Kimliği (Sayısal ID - Dashboard İçin)'), m('input.FormControl', { value: this.setting('ulasimarsiv-seo.ga_id_number')(), oninput: (e) => this.setting('ulasimarsiv-seo.ga_id_number')(e.target.value) }) ]),
+                    m('div.Form-group', [ m('label', 'Google Search Console Doğrulama Kodu'), m('input.FormControl', { value: this.setting('ulasimarsiv-seo.gsc_code')(), oninput: (e) => this.setting('ulasimarsiv-seo.gsc_code')(e.target.value) }) ]),
+                    m('div.Form-group', [ m('label', 'Google Ads Yayıncı Kimliği (ca-pub-XXXXXXXX)'), m('input.FormControl', { value: this.setting('ulasimarsiv-seo.ads_client')(), oninput: (e) => this.setting('ulasimarsiv-seo.ads_client')(e.target.value) }) ]),
+                    m('div.Form-group', [ m('label', 'Site Açıklaması (Meta Description)'), m('textarea.FormControl', { value: this.setting('ulasimarsiv-seo.meta_description_prefix')(), oninput: (e) => this.setting('ulasimarsiv-seo.meta_description_prefix')(e.target.value) }) ]),
+                    m('div.Form-group', [ m('label', 'Meta Anahtar Kelimeler'), m('textarea.FormControl', { value: this.setting('ulasimarsiv-seo.meta_keywords')(), oninput: (e) => this.setting('ulasimarsiv-seo.meta_keywords')(e.target.value) }) ]),
+                    m('div.Form-group', [ m('label', 'Cron-Job.org Gizli Anahtarı (Tetikleme Şifresi)'), m('input.FormControl', { value: this.setting('ulasimarsiv-seo.trigger_secret')(), oninput: (e) => this.setting('ulasimarsiv-seo.trigger_secret')(e.target.value) }) ]),
+                    m('div.Form-group', [ m('button.Button.Button--primary', {onclick: this.saveSettings.bind(this), loading: this.loading}, 'Ayarları Kaydet') ])
                 ]) : null
             ])
         ]);
     }
+
+    saveSettings(e) {
+        e.preventDefault();
+        this.loading = true;
+        this.saveCache('ulasimarsiv_seo_cache', {}); 
+        this.onsubmit(e);
+    }
 }
 
 app.initializers.add('ulasimarsiv-seo-pack', () => {
-    app.extensionData.for('ulasimarsiv-seo-pack').registerSetting(function () {
-        return m(SeoAdminPage, { setting: this.setting.bind(this) });
-    });
+    app.extensionData.for('ulasimarsiv-seo-pack').registerPage(SeoAdminPage);
 });
