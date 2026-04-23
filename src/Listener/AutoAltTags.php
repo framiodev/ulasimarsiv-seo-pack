@@ -8,19 +8,15 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Str;
 
-use Flarum\Formatter\Formatter;
-
 class AutoAltTags
 {
     protected $settings;
     protected $db;
-    protected $formatter;
 
-    public function __construct(SettingsRepositoryInterface $settings, ConnectionInterface $db, Formatter $formatter)
+    public function __construct(SettingsRepositoryInterface $settings, ConnectionInterface $db)
     {
         $this->settings = $settings;
         $this->db = $db;
-        $this->formatter = $formatter;
     }
 
     public function whenPostCreated(Posted $event)
@@ -37,17 +33,18 @@ class AutoAltTags
     {
         if (!$post) return;
 
-        $xml = $post->content;
+        // Flarum 2.0: parsed_content XML'i döndürür
+        $xml = $post->parsed_content;
 
-        if (strpos($xml, 'ULASIMARSIV-IMAGE') === false && strpos($xml, 'UPL-IMAGE-PREVIEW') === false) {
+        if (empty($xml) || (strpos($xml, 'ULASIMARSIV-IMAGE') === false && strpos($xml, 'UPL-IMAGE-PREVIEW') === false)) {
             return;
         }
 
         $discussionTitle = $post->discussion ? $post->discussion->title : '';
         $forumUrl = 'forum.ulasimarsiv.com';
 
-        $formatter = $this->formatter;
-        $sourceText = $formatter->unparse($xml);
+        // Flarum 2.0: content doğrudan Markdown metni döndürür. Formatter'a gerek yok.
+        $sourceText = $post->content;
 
         preg_match_all('/-\s*\*\*(.*?)\*\*/s', $sourceText, $matches);
         $newAltText = '';
@@ -83,6 +80,7 @@ class AutoAltTags
 
         if ($changed) {
             $table = $post->getTable();
+            // Veritabanındaki sütun adı hala 'content' (XML verisini saklar)
             $this->db->table($table)->where('id', $post->id)->update(['content' => $xml]);
         }
     }
