@@ -9,8 +9,9 @@ use Flarum\Post\PostRepository;
 use Psr\Http\Message\ServerRequestInterface;
 use Flarum\Http\UrlGenerator;
 use Illuminate\Support\Str;
+use Flarum\Frontend\Content\ContentInterface;
 
-class InjectSeoTags
+class InjectSeoTags implements ContentInterface
 {
     protected $settings;
     protected $discussions;

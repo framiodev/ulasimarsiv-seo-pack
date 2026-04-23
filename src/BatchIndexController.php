@@ -12,6 +12,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Laminas\Diactoros\Response\JsonResponse;
 use Flarum\Http\UrlGenerator;
 use Google\Client;
+use Flarum\Formatter\Formatter;
 use Google\Service\Indexing;
 
 class BatchIndexController implements RequestHandlerInterface
@@ -19,12 +20,14 @@ class BatchIndexController implements RequestHandlerInterface
     protected $settings;
     protected $url;
     protected $db;
+    protected $formatter;
 
-    public function __construct(SettingsRepositoryInterface $settings, UrlGenerator $url, ConnectionInterface $db)
+    public function __construct(SettingsRepositoryInterface $settings, UrlGenerator $url, ConnectionInterface $db, Formatter $formatter)
     {
         $this->settings = $settings;
         $this->url = $url;
         $this->db = $db;
+        $this->formatter = $formatter;
     }
 
     public function handle(ServerRequestInterface $request): ResponseInterface
@@ -115,7 +118,7 @@ class BatchIndexController implements RequestHandlerInterface
         $discussionTitle = $post->discussion ? $post->discussion->title : '';
         $forumUrl = 'forum.ulasimarsiv.com';
 
-        $formatter = resolve('Flarum\Formatter\Formatter');
+        $formatter = $this->formatter;
         $sourceText = $formatter->unparse($xml);
 
         preg_match_all('/-\s*\*\*(.*?)\*\*/s', $sourceText, $matches);

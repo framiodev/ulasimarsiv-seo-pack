@@ -8,15 +8,19 @@ use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Support\Str;
 
+use Flarum\Formatter\Formatter;
+
 class AutoAltTags
 {
     protected $settings;
     protected $db;
+    protected $formatter;
 
-    public function __construct(SettingsRepositoryInterface $settings, ConnectionInterface $db)
+    public function __construct(SettingsRepositoryInterface $settings, ConnectionInterface $db, Formatter $formatter)
     {
         $this->settings = $settings;
         $this->db = $db;
+        $this->formatter = $formatter;
     }
 
     public function whenPostCreated(Posted $event)
@@ -42,7 +46,7 @@ class AutoAltTags
         $discussionTitle = $post->discussion ? $post->discussion->title : '';
         $forumUrl = 'forum.ulasimarsiv.com';
 
-        $formatter = resolve('Flarum\Formatter\Formatter');
+        $formatter = $this->formatter;
         $sourceText = $formatter->unparse($xml);
 
         preg_match_all('/-\s*\*\*(.*?)\*\*/s', $sourceText, $matches);
