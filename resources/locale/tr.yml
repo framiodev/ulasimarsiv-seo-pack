@@ -1,0 +1,19 @@
+ulasimarsiv-seo-pack:
+  admin:
+    nav:
+      dashboard: "Dashboard"
+      indexing: "İndeks Yönetimi"
+      images: "Görsel SEO"
+      settings: "Ayarlar"
+    dashboard:
+      progress_title: "İndeksleme İlerlemesi"
+      search_queries: "En Çok Aranan Kelimeler"
+      popular_pages: "Popüler Sayfalar"
+      google_status: "Google API Bağlı"
+      indexed_status: "Google'a Bildirildi"
+    indexing:
+      title: "İçerik İndeks Yöneticisi"
+      preview_btn: "Google Önizleme"
+      preview_close: "Önizlemeyi Kapat"
+    settings:
+      title: "API ve Temel Ayarlar"

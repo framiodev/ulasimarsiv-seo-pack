@@ -1,0 +1,32 @@
+{
+    "name": "ulasimarsiv/seo-pack",
+    "description": "Gelişmiş Flarum SEO: Meta Etiketleri, Sitemap ve Google Indexing API Entegrasyonu.",
+    "type": "flarum-extension",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ulaşım Arşiv Team",
+            "email": "info@ulasimarsiv.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "UlasimArsiv\\SeoPack\\": "src/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "Ulaşım Arşiv SEO Pack",
+            "icon": {
+                "name": "fas fa-truck-moving",
+                "backgroundColor": "#de841f",
+                "color": "#fff"
+            }
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "flarum/core": "^2.0-beta.1",
+        "google/apiclient": "^2.12.1"
+    }
+}
