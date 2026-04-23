@@ -175,5 +175,8 @@ class SeoAdminPage extends ExtensionPage {
 }
 
 app.initializers.add('ulasimarsiv-seo-pack', () => {
-    app.extensionData.for('ulasimarsiv-seo-pack').registerPage(SeoAdminPage);
+    const registry = app.registry || app.extensionData;
+    if (registry) {
+        registry.for('ulasimarsiv-seo-pack').registerPage(SeoAdminPage);
+    }
 });

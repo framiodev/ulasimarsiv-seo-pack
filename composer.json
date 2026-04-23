@@ -1,6 +1,6 @@
 {
     "name": "ulasimarsiv/seo-pack",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "description": "Gelişmiş Flarum SEO: Meta Etiketleri, Sitemap ve Google Indexing API Entegrasyonu.",
     "type": "flarum-extension",
     "license": "MIT",
