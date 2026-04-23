@@ -49,15 +49,15 @@ return [
 
     (new Extend\Event())
         ->listen(Started::class, function (Started $event) {
-            resolve(SendToGoogleConsole::class)->whenDiscussionStarted($event);
+            app(SendToGoogleConsole::class)->whenDiscussionStarted($event);
         })
         ->listen(Posted::class, function (Posted $event) {
-            resolve(SendToGoogleConsole::class)->whenPostCreated($event);
-            resolve(AutoAltTags::class)->whenPostCreated($event);
+            app(SendToGoogleConsole::class)->whenPostCreated($event);
+            app(AutoAltTags::class)->whenPostCreated($event);
         })
         ->listen(Revised::class, function (Revised $event) {
-            resolve(SendToGoogleConsole::class)->whenPostRevised($event);
-            resolve(AutoAltTags::class)->whenPostRevised($event);
+            app(SendToGoogleConsole::class)->whenPostRevised($event);
+            app(AutoAltTags::class)->whenPostRevised($event);
         }),
 
     (new Extend\Console())
