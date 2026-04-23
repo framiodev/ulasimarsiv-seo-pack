@@ -9,9 +9,7 @@ use Flarum\Post\PostRepository;
 use Psr\Http\Message\ServerRequestInterface;
 use Flarum\Http\UrlGenerator;
 use Illuminate\Support\Str;
-use Flarum\Frontend\Content\ContentInterface;
-
-class InjectSeoTags implements ContentInterface
+class InjectSeoTags
 {
     protected $settings;
     protected $discussions;
@@ -63,18 +61,18 @@ class InjectSeoTags implements ContentInterface
         $baseUrl = rtrim($this->url->to('forum')->base(), '/');
         $description = $this->settings->get('forum_description');
 
-        $document->meta['og:site_name'] = $siteTitle;
-        $document->meta['og:type'] = 'website';
-        $document->meta['og:url'] = $baseUrl;
+        $document->head[] = '<meta property="og:site_name" content="' . e($siteTitle) . '">';
+        $document->head[] = '<meta property="og:type" content="website">';
+        $document->head[] = '<meta property="og:url" content="' . e($baseUrl) . '">';
         $document->canonicalUrl = $baseUrl;
 
         if ($description) {
             $document->meta['description'] = $description;
-            $document->meta['og:description'] = $description;
+            $document->head[] = '<meta property="og:description" content="' . e($description) . '">';
         }
 
         if ($logo = $this->settings->get('logo_path')) {
-            $document->meta['og:image'] = $baseUrl . '/assets/' . $logo;
+            $document->head[] = '<meta property="og:image" content="' . e($baseUrl . '/assets/' . $logo) . '">';
         }
 
         // Home Page JSON-LD (WebSite & SiteNavigation)
@@ -126,7 +124,7 @@ class InjectSeoTags implements ContentInterface
         
         if ($tag && $tag->description) {
             $document->meta['description'] = $tag->description;
-            $document->meta['og:description'] = $tag->description;
+            $document->head[] = '<meta property="og:description" content="' . e($tag->description) . '">';
         }
 
         // Tag Page JSON-LD
@@ -180,9 +178,9 @@ class InjectSeoTags implements ContentInterface
             $pageTitle .= ' | ' . $this->settings->get('forum_title');
             
             $document->title = $pageTitle;
-            $document->meta['og:title'] = $pageTitle;
-            $document->meta['twitter:title'] = $pageTitle;
-            $document->meta['og:type'] = 'article';
+            $document->head[] = '<meta property="og:title" content="' . e($pageTitle) . '">';
+            $document->head[] = '<meta name="twitter:title" content="' . e($pageTitle) . '">';
+            $document->head[] = '<meta property="og:type" content="article">';
 
             $baseUrl = rtrim($request->getUri()->getScheme() . '://' . $request->getUri()->getHost(), '/');
             
@@ -207,14 +205,14 @@ class InjectSeoTags implements ContentInterface
             if (!empty($allImages)) {
                 $imageUrl = str_replace(' ', '%20', $allImages[0]['url']);
                 $imageUrl = str_replace(['/thumb_', '/mini_'], '/', $imageUrl);
-                $document->meta['og:image'] = $imageUrl;
-                $document->meta['twitter:image'] = $imageUrl;
-                $document->meta['twitter:card'] = 'summary_large_image';
+                $document->head[] = '<meta property="og:image" content="' . e($imageUrl) . '">';
+                $document->head[] = '<meta name="twitter:image" content="' . e($imageUrl) . '">';
+                $document->head[] = '<meta name="twitter:card" content="summary_large_image">';
             }
 
             if ($description) {
                 $document->meta['description'] = $description;
-                $document->meta['og:description'] = $description;
+                $document->head[] = '<meta property="og:description" content="' . e($description) . '">';
             }
 
             $canonicalUrl = rtrim($this->url->to('forum')->base(), '/') . "/d/{$discussion->id}-{$discussion->slug}" . ($postNumber ? "/{$postNumber}" : "");
