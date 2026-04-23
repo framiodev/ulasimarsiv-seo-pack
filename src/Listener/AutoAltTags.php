@@ -37,7 +37,7 @@ class AutoAltTags
     {
         if (!$post) return;
 
-        $xml = $post->getAttributes()['content'];
+        $xml = $post->content;
 
         if (strpos($xml, 'ULASIMARSIV-IMAGE') === false && strpos($xml, 'UPL-IMAGE-PREVIEW') === false) {
             return;
