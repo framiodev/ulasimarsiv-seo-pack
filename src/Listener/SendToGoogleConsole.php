@@ -22,9 +22,6 @@ class SendToGoogleConsole
     {
         $url = $this->url->to('forum')->route('discussion', ['id' => $event->discussion->id]);
         $this->sendToGoogle($url);
-        
-        $event->discussion->seo_last_sent_at = \Carbon\Carbon::now();
-        $event->discussion->save();
     }
 
     public function whenPostCreated(Posted $event)
@@ -35,9 +32,6 @@ class SendToGoogleConsole
         $finalUrl = $baseUrl . '/d/' . $event->post->discussion->id . '-' . $event->post->discussion->slug . '/' . $event->post->number;
 
         $this->sendToGoogle($finalUrl);
-
-        $event->post->discussion->seo_last_sent_at = \Carbon\Carbon::now();
-        $event->post->discussion->save();
     }
 
     public function whenPostRevised(Revised $event)
@@ -46,9 +40,6 @@ class SendToGoogleConsole
         $finalUrl = $baseUrl . '/d/' . $event->post->discussion->id . '-' . $event->post->discussion->slug . '/' . $event->post->number;
         
         $this->sendToGoogle($finalUrl);
-
-        $event->post->discussion->seo_last_sent_at = \Carbon\Carbon::now();
-        $event->post->discussion->save();
     }
 
     protected function sendToGoogle($url)
