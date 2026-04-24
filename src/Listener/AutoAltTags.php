@@ -32,29 +32,29 @@ class AutoAltTags
         try {
             if (!$post) return;
 
-            // Flarum 2.0: parsed_content XML'i döndürür
-            $xml = $post->parsed_content;
+            // Flarum 2.0'da hem veritabanında hem de modelde 'content' ham Markdown'ı tutar.
+            $content = $post->content;
 
-            if (empty($xml) || (strpos($xml, 'ULASIMARSIV-IMAGE') === false && strpos($xml, 'UPL-IMAGE-PREVIEW') === false)) {
+            if (empty($content) || (strpos($content, '[ulasimarsiv-image') === false && strpos($content, '[upl-image-preview') === false)) {
                 return;
             }
 
             $discussionTitle = $post->discussion ? $post->discussion->title : '';
             $forumUrl = 'forum.ulasimarsiv.com';
 
-            // Flarum 2.0: content doğrudan Markdown metni döndürür.
-            $sourceText = $post->content;
-
-            preg_match_all('/-\s*\*\*(.*?)\*\*/s', $sourceText, $matches);
+            // Künye bilgisini çek (Varan | 06 AH 3256 gibi)
+            preg_match_all('/-\s*\*\*(.*?)\*\*/s', $content, $matches);
             $newAltText = '';
             if (!empty($matches[1])) {
                 $cleanParts = array_map('trim', $matches[1]);
+                // İlk iki kalın yazılı metni al ve birleştir
                 $newAltText = implode(' - ', array_slice($cleanParts, 0, 2));
             }
 
             $changed = false;
 
-            $xml = preg_replace_callback('/<(ULASIMARSIV-IMAGE|UPL-IMAGE-PREVIEW)\s([^>]+)>/', function($m) use ($newAltText, $discussionTitle, $forumUrl, &$changed) {
+            // BBCode içindeki alt="..." kısmını güncelle
+            $content = preg_replace_callback('/\[(ulasimarsiv-image|upl-image-preview)\s([^\]]+)\]/', function($m) use ($newAltText, $discussionTitle, $forumUrl, &$changed) {
                 $tagName = $m[1];
                 $attrs = $m[2];
 
@@ -62,28 +62,34 @@ class AutoAltTags
                     $finalAlt = $newAltText;
                 } else {
                     preg_match('/url="([^"]+)"/', $attrs, $urlM);
-                    $url = html_entity_decode($urlM[1] ?? '');
+                    $url = $urlM[1] ?? '';
                     $path = parse_url($url, PHP_URL_PATH);
                     $filename = $path ? ucwords(str_replace(['-', '_'], ' ', pathinfo($path, PATHINFO_FILENAME))) : '';
                     $finalAlt = ($filename ? $filename . ' - ' : '') . $discussionTitle . ' - ' . $forumUrl;
                 }
 
-                $finalAlt = str_replace(['"', '{TEXT?}', '[', ']'], '', $finalAlt);
-                $finalAlt = Str::limit($finalAlt, 125);
-                $safeAlt = htmlspecialchars($finalAlt, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+                // Karakter temizliği
+                $finalAlt = str_replace(['"', '[', ']', '{', '}'], '', $finalAlt);
+                $finalAlt = Str::limit($finalAlt, 120);
 
-                $newAttrs = preg_replace('/alt="[^"]*"/', 'alt="' . $safeAlt . '"', $attrs);
+                // Eğer zaten alt etiketi varsa onu değiştir, yoksa ekle (ama bizde hep var)
+                if (strpos($attrs, 'alt=') !== false) {
+                    $newAttrs = preg_replace('/alt="[^"]*"/', 'alt="' . $finalAlt . '"', $attrs);
+                } else {
+                    $newAttrs = $attrs . ' alt="' . $finalAlt . '"';
+                }
+
                 if ($newAttrs !== $attrs) $changed = true;
 
-                return '<' . $tagName . ' ' . $newAttrs . '>';
-            }, $xml);
+                return '[' . $tagName . ' ' . $newAttrs . ']';
+            }, $content);
 
-            if ($changed && !empty($xml)) {
+            if ($changed && !empty($content)) {
                 $table = $post->getTable();
-                app('db')->table($table)->where('id', $post->id)->update(['content' => $xml]);
+                // Veritabanını sessizce güncelle (Model save() kullanmıyoruz ki tekrar tetiklenmesin)
+                app('db')->table($table)->where('id', $post->id)->update(['content' => $content]);
             }
         } catch (Throwable $e) {
-            // Hata oluşsa bile forumu kilitleme, sadece logla (varsa)
             if (file_exists(storage_path('logs'))) {
                 @file_put_contents(storage_path('logs/seo-error.log'), '['.date('Y-m-d H:i:s').'] Error: '.$e->getMessage().PHP_EOL, FILE_APPEND);
             }
