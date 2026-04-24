@@ -56,18 +56,15 @@ return [
             try {
                 app(SendToGoogleConsole::class)->whenPostCreated($event);
             } catch (\Throwable $e) {}
-            
-            try {
-                app(AutoAltTags::class)->whenPostCreated($event);
-            } catch (\Throwable $e) {}
         })
         ->listen(Revised::class, function (Revised $event) {
             try {
                 app(SendToGoogleConsole::class)->whenPostRevised($event);
             } catch (\Throwable $e) {}
-
+        })
+        ->listen(\Flarum\Post\Event\Saving::class, function (\Flarum\Post\Event\Saving $event) {
             try {
-                app(AutoAltTags::class)->whenPostRevised($event);
+                app(AutoAltTags::class)->whenPostSaving($event);
             } catch (\Throwable $e) {}
         }),
 

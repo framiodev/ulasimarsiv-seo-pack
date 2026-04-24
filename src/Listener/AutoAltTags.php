@@ -17,12 +17,7 @@ class AutoAltTags
         $this->settings = $settings;
     }
 
-    public function whenPostCreated(Posted $event)
-    {
-        $this->updateAltTags($event->post);
-    }
-
-    public function whenPostRevised(Revised $event)
+    public function whenPostSaving(\Flarum\Post\Event\Saving $event)
     {
         $this->updateAltTags($event->post);
     }
@@ -30,21 +25,19 @@ class AutoAltTags
     protected function updateAltTags($post)
     {
         try {
-            // Post veya içerik yoksa veya zaten null ise işlem yapma
-            if (!$post || !isset($post->content) || $post->content === null) {
+            if (!$post || !isset($post->parsed_content) || $post->parsed_content === null) {
                 return;
             }
 
-            $xml = (string) $post->content;
+            // Flarum 2.0'da veritabanına yazılacak olan XML verisi 'parsed_content' içindedir.
+            $xml = (string) $post->parsed_content;
 
-            // Hem küçük hem büyük harf kontrolü
             if (empty($xml) || !preg_match('/(ulasimarsiv-image|upl-image-preview)/i', $xml)) {
                 return;
             }
 
             $discussionTitle = $post->discussion ? $post->discussion->title : '';
 
-            // Künye bilgisini çek
             $cleanText = strip_tags($xml);
             preg_match_all('/\*\*(.*?)\*\*/s', $cleanText, $matches);
             
@@ -59,13 +52,11 @@ class AutoAltTags
 
             $changed = false;
 
-            // XML güncelleme
             $newXml = preg_replace_callback('/<(ulasimarsiv-image|upl-image-preview)\s([^>]+)>/i', function($m) use ($newAltText, $discussionTitle, &$changed) {
                 $tagName = $m[1];
                 $attrs = $m[2];
 
                 $finalAlt = !empty($newAltText) ? $newAltText : ($discussionTitle . ' - forum.ulasimarsiv.com');
-
                 $finalAlt = str_replace(['"', '[', ']', '{', '}', '<', '>'], '', $finalAlt);
                 $finalAlt = trim(Str::limit($finalAlt, 120));
                 $safeAlt = htmlspecialchars($finalAlt, ENT_XML1 | ENT_COMPAT, 'UTF-8');
@@ -82,12 +73,10 @@ class AutoAltTags
             }, $xml);
 
             if ($changed && !empty($newXml)) {
-                // DB yerine Eloquent kullan: Flarum'un Revised hatasını önler
-                $post->content = $newXml;
-                
-                // Save işlemini sessizce yap (event döngüsüne girmemesi için gerekirse)
-                // Ama burada Revised zaten tetiklendiği için normal save yeterli olmalı
-                $post->save();
+                // Sadece parsed_content özelliğini güncelle.
+                // Saving event'inde olduğumuz için Flarum bu güncel hali DB'ye yazacak.
+                // KESİNLİKLE $post->save() ÇAĞIRMIYORUZ! (Sonsuz döngüyü ve NULL hatasını engeller)
+                $post->parsed_content = $newXml;
             }
 
         } catch (Throwable $e) {
