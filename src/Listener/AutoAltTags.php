@@ -29,70 +29,85 @@ class AutoAltTags
 
     protected function updateAltTags($post)
     {
+        $logFile = storage_path('logs/seo-pack.log');
+        $log = function($msg) use ($logFile) {
+            @file_put_contents($logFile, '['.date('Y-m-d H:i:s').'] ' . $msg . PHP_EOL, FILE_APPEND);
+        };
+
         try {
             if (!$post) return;
+            $log("İşlem başlıyor: Post ID " . $post->id);
 
-            // Flarum 2.0'da hem veritabanında hem de modelde 'content' ham Markdown'ı tutar.
             $content = $post->content;
+            if (empty($content)) {
+                $log("HATA: İçerik boş.");
+                return;
+            }
 
-            if (empty($content) || (strpos($content, '[ulasimarsiv-image') === false && strpos($content, '[upl-image-preview') === false)) {
+            // Etiket kontrolü
+            if (strpos($content, '[ulasimarsiv-image') === false && strpos($content, '[upl-image-preview') === false) {
+                $log("Bilgi: İçerikte desteklenen BBCode bulunamadı.");
                 return;
             }
 
             $discussionTitle = $post->discussion ? $post->discussion->title : '';
-            $forumUrl = 'forum.ulasimarsiv.com';
 
-            // Künye bilgisini çek (Varan | 06 AH 3256 gibi)
-            preg_match_all('/-\s*\*\*(.*?)\*\*/s', $content, $matches);
+            // Künye bilgisini çek (Tırnaklı veya tırnaksız her türlü **...** yapısını yakala)
+            preg_match_all('/\*\*(.*?)\*\*/s', $content, $matches);
             $newAltText = '';
             if (!empty($matches[1])) {
-                $cleanParts = array_map('trim', $matches[1]);
-                // İlk iki kalın yazılı metni al ve birleştir
+                $cleanParts = array_map(function($item) {
+                    return trim(str_replace(['"', "'"], '', $item));
+                }, $matches[1]);
+                
+                // Sadece anlamlı (boş olmayan) kısımları al
+                $cleanParts = array_values(array_filter($cleanParts));
                 $newAltText = implode(' - ', array_slice($cleanParts, 0, 2));
+                $log("Bulunan Künye: " . $newAltText);
             }
 
             $changed = false;
 
-            // BBCode içindeki alt="..." kısmını güncelle
-            $content = preg_replace_callback('/\[(ulasimarsiv-image|upl-image-preview)\s([^\]]+)\]/', function($m) use ($newAltText, $discussionTitle, $forumUrl, &$changed) {
+            // BBCode güncelleme
+            $content = preg_replace_callback('/\[(ulasimarsiv-image|upl-image-preview)\s([^\]]+)\]/', function($m) use ($newAltText, $discussionTitle, &$changed, $log) {
                 $tagName = $m[1];
                 $attrs = $m[2];
 
                 if (!empty($newAltText)) {
                     $finalAlt = $newAltText;
                 } else {
-                    preg_match('/url="([^"]+)"/', $attrs, $urlM);
-                    $url = $urlM[1] ?? '';
-                    $path = parse_url($url, PHP_URL_PATH);
-                    $filename = $path ? ucwords(str_replace(['-', '_'], ' ', pathinfo($path, PATHINFO_FILENAME))) : '';
-                    $finalAlt = ($filename ? $filename . ' - ' : '') . $discussionTitle . ' - ' . $forumUrl;
+                    $finalAlt = $discussionTitle . ' - forum.ulasimarsiv.com';
                 }
 
                 // Karakter temizliği
-                $finalAlt = str_replace(['"', '[', ']', '{', '}'], '', $finalAlt);
-                $finalAlt = Str::limit($finalAlt, 120);
+                $finalAlt = str_replace(['"', '[', ']', '{', '}', '<', '>'], '', $finalAlt);
+                $finalAlt = trim(Str::limit($finalAlt, 120));
 
-                // Eğer zaten alt etiketi varsa onu değiştir, yoksa ekle (ama bizde hep var)
                 if (strpos($attrs, 'alt=') !== false) {
                     $newAttrs = preg_replace('/alt="[^"]*"/', 'alt="' . $finalAlt . '"', $attrs);
                 } else {
                     $newAttrs = $attrs . ' alt="' . $finalAlt . '"';
                 }
 
-                if ($newAttrs !== $attrs) $changed = true;
+                if ($newAttrs !== $attrs) {
+                    $changed = true;
+                    $log("Etiket güncellendi: " . $finalAlt);
+                }
 
                 return '[' . $tagName . ' ' . $newAttrs . ']';
             }, $content);
 
             if ($changed && !empty($content)) {
                 $table = $post->getTable();
-                // Veritabanını sessizce güncelle (Model save() kullanmıyoruz ki tekrar tetiklenmesin)
+                $log("Veritabanına yazılıyor: " . $table . " (ID: " . $post->id . ")");
                 app('db')->table($table)->where('id', $post->id)->update(['content' => $content]);
+                $log("Yazma işlemi tamamlandı.");
+            } else {
+                $log("Bilgi: Herhangi bir değişiklik yapılmadı.");
             }
+
         } catch (Throwable $e) {
-            if (file_exists(storage_path('logs'))) {
-                @file_put_contents(storage_path('logs/seo-error.log'), '['.date('Y-m-d H:i:s').'] Error: '.$e->getMessage().PHP_EOL, FILE_APPEND);
-            }
+            $log("KRİTİK HATA: " . $e->getMessage());
         }
     }
 }
