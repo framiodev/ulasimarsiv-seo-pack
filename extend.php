@@ -57,18 +57,18 @@ return [
                 app(SendToGoogleConsole::class)->whenPostCreated($event);
             } catch (\Throwable $e) {}
             
-            // try {
-            //    app(AutoAltTags::class)->whenPostCreated($event);
-            // } catch (\Throwable $e) {}
+            try {
+                app(AutoAltTags::class)->whenPostCreated($event);
+            } catch (\Throwable $e) {}
         })
         ->listen(Revised::class, function (Revised $event) {
             try {
                 app(SendToGoogleConsole::class)->whenPostRevised($event);
             } catch (\Throwable $e) {}
 
-            // try {
-            //    app(AutoAltTags::class)->whenPostRevised($event);
-            // } catch (\Throwable $e) {}
+            try {
+                app(AutoAltTags::class)->whenPostRevised($event);
+            } catch (\Throwable $e) {}
         }),
 
     (new Extend\Console())

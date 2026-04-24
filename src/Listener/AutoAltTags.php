@@ -78,7 +78,7 @@ class AutoAltTags
                 return '<' . $tagName . ' ' . $newAttrs . '>';
             }, $xml);
 
-            if ($changed) {
+            if ($changed && !empty($xml)) {
                 $table = $post->getTable();
                 app('db')->table($table)->where('id', $post->id)->update(['content' => $xml]);
             }
