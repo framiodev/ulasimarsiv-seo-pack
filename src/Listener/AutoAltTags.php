@@ -30,19 +30,21 @@ class AutoAltTags
     protected function updateAltTags($post)
     {
         try {
-            if (!$post) return;
+            // Post veya içerik yoksa veya zaten null ise işlem yapma
+            if (!$post || !isset($post->content) || $post->content === null) {
+                return;
+            }
 
-            // Flarum 2.0'da veritabanındaki 'content' sütunu XML saklar.
-            $xml = $post->content;
+            $xml = (string) $post->content;
 
-            // Hem küçük hem büyük harf kontrolü (ulasimarsiv-image veya ULASIMARSIV-IMAGE)
+            // Hem küçük hem büyük harf kontrolü
             if (empty($xml) || !preg_match('/(ulasimarsiv-image|upl-image-preview)/i', $xml)) {
                 return;
             }
 
             $discussionTitle = $post->discussion ? $post->discussion->title : '';
 
-            // Künye bilgisini çek (XML içindeki metinden ayıkla)
+            // Künye bilgisini çek
             $cleanText = strip_tags($xml);
             preg_match_all('/\*\*(.*?)\*\*/s', $cleanText, $matches);
             
@@ -57,23 +59,17 @@ class AutoAltTags
 
             $changed = false;
 
-            // XML içindeki etiketleri güncelle (Case-insensitive /i eklendi)
-            $xml = preg_replace_callback('/<(ulasimarsiv-image|upl-image-preview)\s([^>]+)>/i', function($m) use ($newAltText, $discussionTitle, &$changed) {
+            // XML güncelleme
+            $newXml = preg_replace_callback('/<(ulasimarsiv-image|upl-image-preview)\s([^>]+)>/i', function($m) use ($newAltText, $discussionTitle, &$changed) {
                 $tagName = $m[1];
                 $attrs = $m[2];
 
-                if (!empty($newAltText)) {
-                    $finalAlt = $newAltText;
-                } else {
-                    $finalAlt = $discussionTitle . ' - forum.ulasimarsiv.com';
-                }
+                $finalAlt = !empty($newAltText) ? $newAltText : ($discussionTitle . ' - forum.ulasimarsiv.com');
 
-                // Karakter temizliği ve XML güvenliği
                 $finalAlt = str_replace(['"', '[', ']', '{', '}', '<', '>'], '', $finalAlt);
                 $finalAlt = trim(Str::limit($finalAlt, 120));
                 $safeAlt = htmlspecialchars($finalAlt, ENT_XML1 | ENT_COMPAT, 'UTF-8');
 
-                // alt="..." kısmını bul ve değiştir veya ekle
                 if (preg_match('/alt="[^"]*"/i', $attrs)) {
                     $newAttrs = preg_replace('/alt="[^"]*"/i', 'alt="' . $safeAlt . '"', $attrs);
                 } else {
@@ -85,14 +81,17 @@ class AutoAltTags
                 return '<' . $tagName . ' ' . $newAttrs . '>';
             }, $xml);
 
-            if ($changed && !empty($xml)) {
-                $table = $post->getTable();
-                app('db')->table($table)->where('id', $post->id)->update(['content' => $xml]);
+            if ($changed && !empty($newXml)) {
+                // DB yerine Eloquent kullan: Flarum'un Revised hatasını önler
+                $post->content = $newXml;
+                
+                // Save işlemini sessizce yap (event döngüsüne girmemesi için gerekirse)
+                // Ama burada Revised zaten tetiklendiği için normal save yeterli olmalı
+                $post->save();
             }
 
         } catch (Throwable $e) {
-            // Hata kaydı
-            @file_put_contents(storage_path('logs/seo-error.log'), '['.date('Y-m-d H:i:s').'] Post '.$post->id.' Error: '.$e->getMessage().PHP_EOL, FILE_APPEND);
+            @file_put_contents(storage_path('logs/seo-error.log'), '['.date('Y-m-d H:i:s').'] Post Error: '.$e->getMessage().PHP_EOL, FILE_APPEND);
         }
     }
 }
