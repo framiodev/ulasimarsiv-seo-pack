@@ -25,21 +25,21 @@ class AutoAltTags
     protected function updateAltTags($post)
     {
         try {
-            if (!$post || !isset($post->parsed_content) || $post->parsed_content === null) {
+            if (!$post || !isset($post->content) || $post->content === null) {
                 return;
             }
 
-            // Flarum 2.0'da veritabanına yazılacak olan XML verisi 'parsed_content' içindedir.
-            $xml = (string) $post->parsed_content;
+            // Flarum'da `$post->content` ham Markdown / BBCode metnini verir.
+            $markdown = (string) $post->content;
 
-            if (empty($xml) || !preg_match('/(ulasimarsiv-image|upl-image-preview)/i', $xml)) {
+            if (empty($markdown) || !preg_match('/\[(ulasimarsiv-image|upl-image-preview)/i', $markdown)) {
                 return;
             }
 
             $discussionTitle = $post->discussion ? $post->discussion->title : '';
 
-            $cleanText = strip_tags($xml);
-            preg_match_all('/\*\*(.*?)\*\*/s', $cleanText, $matches);
+            // Künye bilgisini Markdown üzerinden çek
+            preg_match_all('/\*\*(.*?)\*\*/s', $markdown, $matches);
             
             $newAltText = '';
             if (!empty($matches[1])) {
@@ -52,14 +52,16 @@ class AutoAltTags
 
             $changed = false;
 
-            $newXml = preg_replace_callback('/<(ulasimarsiv-image|upl-image-preview)\s([^>]+)>/i', function($m) use ($newAltText, $discussionTitle, &$changed) {
+            // BBCode güncelleme (XML DEĞİL)
+            $newMarkdown = preg_replace_callback('/\[(ulasimarsiv-image|upl-image-preview)\s+([^\]]+)\]/i', function($m) use ($newAltText, $discussionTitle, &$changed) {
                 $tagName = $m[1];
                 $attrs = $m[2];
 
                 $finalAlt = !empty($newAltText) ? $newAltText : ($discussionTitle . ' - forum.ulasimarsiv.com');
                 $finalAlt = str_replace(['"', '[', ']', '{', '}', '<', '>'], '', $finalAlt);
                 $finalAlt = trim(Str::limit($finalAlt, 120));
-                $safeAlt = htmlspecialchars($finalAlt, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+                // Markdown içinde kullanacağımız için sadece çift tırnakları encode etmek yeterli
+                $safeAlt = htmlspecialchars($finalAlt, ENT_QUOTES, 'UTF-8');
 
                 if (preg_match('/alt="[^"]*"/i', $attrs)) {
                     $newAttrs = preg_replace('/alt="[^"]*"/i', 'alt="' . $safeAlt . '"', $attrs);
@@ -69,14 +71,12 @@ class AutoAltTags
 
                 if ($newAttrs !== $attrs) $changed = true;
 
-                return '<' . $tagName . ' ' . $newAttrs . '>';
-            }, $xml);
+                return '[' . $tagName . ' ' . $newAttrs . ']';
+            }, $markdown);
 
-            if ($changed && !empty($newXml)) {
-                // Sadece parsed_content özelliğini güncelle.
-                // Saving event'inde olduğumuz için Flarum bu güncel hali DB'ye yazacak.
-                // KESİNLİKLE $post->save() ÇAĞIRMIYORUZ! (Sonsuz döngüyü ve NULL hatasını engeller)
-                $post->parsed_content = $newXml;
+            if ($changed && !empty($newMarkdown)) {
+                // Flarum'un KENDİ parser'ını kullanarak Markdown'ı tekrar geçerli ve güvenli XML'e dönüştür
+                $post->setContentAttribute($newMarkdown);
             }
 
         } catch (Throwable $e) {
