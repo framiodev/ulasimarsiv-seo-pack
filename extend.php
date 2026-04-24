@@ -48,15 +48,27 @@ return [
 
     (new Extend\Event())
         ->listen(Started::class, function (Started $event) {
-            app(SendToGoogleConsole::class)->whenDiscussionStarted($event);
+            try {
+                app(SendToGoogleConsole::class)->whenDiscussionStarted($event);
+            } catch (\Throwable $e) {}
         })
         ->listen(Posted::class, function (Posted $event) {
-            app(SendToGoogleConsole::class)->whenPostCreated($event);
-            app(AutoAltTags::class)->whenPostCreated($event);
+            try {
+                app(SendToGoogleConsole::class)->whenPostCreated($event);
+            } catch (\Throwable $e) {}
+            
+            try {
+                app(AutoAltTags::class)->whenPostCreated($event);
+            } catch (\Throwable $e) {}
         })
         ->listen(Revised::class, function (Revised $event) {
-            app(SendToGoogleConsole::class)->whenPostRevised($event);
-            app(AutoAltTags::class)->whenPostRevised($event);
+            try {
+                app(SendToGoogleConsole::class)->whenPostRevised($event);
+            } catch (\Throwable $e) {}
+
+            try {
+                app(AutoAltTags::class)->whenPostRevised($event);
+            } catch (\Throwable $e) {}
         }),
 
     (new Extend\Console())
