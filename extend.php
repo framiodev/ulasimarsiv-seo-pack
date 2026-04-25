@@ -12,8 +12,8 @@ use UlasimArsiv\SeoPack\BatchIndexController;
 use UlasimArsiv\SeoPack\InspectController;
 use UlasimArsiv\SeoPack\ContentListController;
 use UlasimArsiv\SeoPack\DashboardStatsController;
-use UlasimArsiv\SeoPack\WebAutoIndexController;
 use UlasimArsiv\SeoPack\ImageIndexController;
+use UlasimArsiv\SeoPack\FixAltTagsController;
 use UlasimArsiv\SeoPack\Console\AutoIndexCommand;
 use UlasimArsiv\SeoPack\Console\FixOldAltTagsCommand;
 use UlasimArsiv\SeoPack\Listener\SendToGoogleConsole;
@@ -41,7 +41,8 @@ return [
         ->get('/seo/content', 'seo.content', ContentListController::class)
         ->get('/seo/stats', 'seo.dashboard.stats', DashboardStatsController::class)
         ->get('/seo/images', 'seo.images.index', ImageIndexController::class)
-        ->get('/seo/trigger-index', 'seo.trigger.index', WebAutoIndexController::class),
+        ->get('/seo/trigger-index', 'seo.trigger.index', WebAutoIndexController::class)
+        ->post('/seo/fix-alt-tags', 'seo.fix.alt.tags', FixAltTagsController::class),
 
     (new Extend\Frontend('forum'))
         ->content(InjectSeoTags::class),

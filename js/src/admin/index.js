@@ -142,6 +142,20 @@ class SeoAdminPage extends ExtensionPage {
 
                 this.activeTab === 'images' ? m('div.SeoCard', [
                     m('h3', 'Görsel SEO Denetimi [ulasimarsiv-image]'),
+                    m('button.Button.Button--primary', {
+                        style: 'margin-bottom: 20px;',
+                        onclick: (e) => {
+                            if(confirm("Tüm eski mesajlar taranacak ve eksik/bozuk Alt etiketleri otomatik olarak onarılacaktır. Onaylıyor musunuz?")) {
+                                e.target.disabled = true;
+                                app.request({ method: 'POST', url: app.forum.attribute('apiUrl') + '/seo/fix-alt-tags' })
+                                .then(res => {
+                                    e.target.disabled = false;
+                                    app.alerts.show({ type: 'success', content: res.message });
+                                    this.loadImages();
+                                });
+                            }
+                        }
+                    }, [m('i.fas.fa-magic'), ' Bozuk Alt Etiketlerini Otomatik Onar']),
                     this.loading ? m('p', 'Veritabanı taranıyor, resimler getiriliyor...') :
                         (this.data.images.items.length > 0 ? m('div.ImageGrid', { style: 'display:grid; grid-template-columns:1fr 1fr; gap:15px;' }, this.data.images.items.map(img =>
                             m('div.SeoCard', { style: 'background:#f4f4f4' }, [
