@@ -32,7 +32,7 @@ class AutoAltTags
             // Flarum'da `$post->content` ham Markdown / BBCode metnini verir.
             $markdown = (string) $post->content;
 
-            if (empty($markdown) || !preg_match('/\[(upl-image-preview)/i', $markdown)) {
+            if (empty($markdown) || !preg_match('/\[(upl-image-preview|ulasimarsiv-image)/i', $markdown)) {
                 return;
             }
 
@@ -52,8 +52,8 @@ class AutoAltTags
 
             $changed = false;
 
-            // BBCode güncelleme (XML DEĞİL) - ulasimarsiv-image YOKSAYILDI.
-            $newMarkdown = preg_replace_callback('/\[(upl-image-preview)\s+([^\]]+)\]/i', function($m) use ($newAltText, $discussionTitle, &$changed) {
+            // BBCode güncelleme (XML DEĞİL)
+            $newMarkdown = preg_replace_callback('/\[(upl-image-preview|ulasimarsiv-image)\s+([^\]]+)\]/i', function($m) use ($newAltText, $discussionTitle, &$changed) {
                 $tagName = $m[1];
                 $attrs = $m[2];
 
