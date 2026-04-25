@@ -10,6 +10,8 @@ use Flarum\Post\CommentPost;
 use Flarum\Settings\SettingsRepositoryInterface;
 use Illuminate\Support\Str;
 
+use Flarum\Http\RequestUtil;
+
 class FixAltTagsController implements RequestHandlerInterface
 {
     protected $settings;
@@ -21,7 +23,7 @@ class FixAltTagsController implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        $actor = $request->getAttribute('actor');
+        $actor = RequestUtil::getActor($request);
         $actor->assertAdmin();
 
         $query = CommentPost::where('content', 'like', '%ulasimarsiv-image%')
